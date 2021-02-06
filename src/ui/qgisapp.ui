@@ -17,7 +17,7 @@
      <x>0</x>
      <y>0</y>
      <width>1064</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -131,6 +131,7 @@
     <addaction name="mActionIdentify"/>
     <addaction name="menuMeasure"/>
     <addaction name="mActionStatisticalSummary"/>
+    <addaction name="mActionMeasureSelectedFeatures"/>
     <addaction name="separator"/>
     <addaction name="mActionZoomFullExtent"/>
     <addaction name="mActionZoomToSelected"/>
@@ -564,6 +565,7 @@
    <addaction name="mActionOpenFieldCalc"/>
    <addaction name="mActionStatisticalSummary"/>
    <addaction name="mActionMapTips"/>
+   <addaction name="mActionMeasureSelectedFeatures"/>
   </widget>
   <widget class="QToolBar" name="mPluginToolBar">
    <property name="windowTitle">
@@ -3394,6 +3396,11 @@ Shows placeholders for labels which could not be placed, e.g. due to overlaps wi
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="mActionMeasureSelectedFeatures">
+   <property name="text">
+    <string>Measure Selected Features</string>
    </property>
   </action>
  </widget>

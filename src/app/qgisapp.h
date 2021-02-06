@@ -503,6 +503,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QAction *actionSelectFreehand() { return mActionSelectFreehand; }
     QAction *actionSelectRadius() { return mActionSelectRadius; }
     QAction *actionIdentify() { return mActionIdentify; }
+    QAction *actionMeasureSelectedFeatures() { return mActionMeasureSelectedFeatures; }
     QAction *actionFeatureAction() { return mActionFeatureAction; }
     QAction *actionMeasure() { return mActionMeasure; }
     QAction *actionMeasureArea() { return mActionMeasureArea; }
@@ -1735,6 +1736,8 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void pan();
     //! Identify feature(s) on the currently selected layer
     void identify();
+    //! Sum length/ area of selected line/ polygon features
+    void measureSelectedFeatures();
     //! Measure distance
     void measure();
     //! Measure area

@@ -2710,6 +2710,7 @@ void QgisApp::createActions()
   connect( mActionSelectByExpression, &QAction::triggered, this, &QgisApp::selectByExpression );
   connect( mActionSelectByForm, &QAction::triggered, this, &QgisApp::selectByForm );
   connect( mActionIdentify, &QAction::triggered, this, &QgisApp::identify );
+  connect( mActionMeasureSelectedFeatures, &QAction::triggered, this, &QgisApp::measureSelectedFeatures );
   connect( mActionFeatureAction, &QAction::triggered, this, &QgisApp::doFeatureAction );
   connect( mActionMeasure, &QAction::triggered, this, &QgisApp::measure );
   connect( mActionMeasureArea, &QAction::triggered, this, &QgisApp::measureArea );
@@ -8096,6 +8097,11 @@ void QgisApp::zoomActualSize()
 void QgisApp::identify()
 {
   mMapCanvas->setMapTool( mMapTools.mIdentify );
+}
+
+void QgisApp::measureSelectedFeatures()
+{
+  visibleMessageBar()->pushMessage( tr("This action is working") );
 }
 
 void QgisApp::doFeatureAction()

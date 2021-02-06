@@ -488,6 +488,10 @@ Returns the native select radius action. Call :py:func:`~QgisInterface.trigger` 
 %Docstring
 Returns the native identify action. Call :py:func:`~QgisInterface.trigger` on it to set the default identify map tool.
 %End
+    virtual QAction *actionMeasureSelectedFeatures() = 0;
+%Docstring
+Returns the native measure selected features action. Call :py:func:`~QgisInterface.trigger` on it to measure selected features.
+%End
     virtual QAction *actionFeatureAction() = 0;
 %Docstring
 Returns the native run action feature action. Call :py:func:`~QgisInterface.trigger` on it to set the default run feature action map tool.
