@@ -892,6 +892,7 @@
         <file>themes/default/transformation.svg</file>
         <file>themes/default/mIconCodeEditor.svg</file>
         <file>themes/default/console/iconSyntaxErrorConsoleParams.svg</file>
+        <file>themes/default/mActionMeasureSelectedFeatures.svg</file>
     </qresource>
     <qresource prefix="/images/tips">
         <file alias="symbol_levels.png">qgis_tips/symbol_levels.png</file>

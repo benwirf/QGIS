@@ -123,6 +123,7 @@ SET(QGIS_APP_SRCS
 
   qgslayerstylingwidget.cpp
   qgsmeasuredialog.cpp
+  qgsmeasureselectedfeaturesdockwidget.cpp
   qgsmeasuretool.cpp
   qgsmergeattributesdialog.cpp
   qgspointmarkeritem.cpp

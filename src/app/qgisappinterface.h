@@ -223,6 +223,7 @@ class APP_EXPORT QgisAppInterface : public QgisInterface
     QAction *actionSelectFreehand() override;
     QAction *actionSelectRadius() override;
     QAction *actionIdentify() override;
+    QAction *actionMeasureSelectedFeatures() override;
     QAction *actionFeatureAction() override;
     QAction *actionMeasure() override;
     QAction *actionMeasureArea() override;
