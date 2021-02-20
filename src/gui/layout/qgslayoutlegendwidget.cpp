@@ -31,6 +31,7 @@
 #include "qgslegendrenderer.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerlegend.h"
+#include "qgsmessagelog.h"//wirf
 #include "qgsproject.h"
 #include "qgsrenderer.h"
 #include "qgsvectorlayer.h"
@@ -113,6 +114,9 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
   connect( mRasterStrokeColorButton, &QgsColorButton::colorChanged, this, &QgsLayoutLegendWidget::mRasterStrokeColorButton_colorChanged );
   connect( mMoveDownToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mMoveDownToolButton_clicked );
   connect( mMoveUpToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mMoveUpToolButton_clicked );
+  // wirf 16_2_21
+  connect( mInvertNodesToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mInvertNodesToolButton_clicked );
+  // wirf 16_2_21
   connect( mRemoveToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mRemoveToolButton_clicked );
   connect( mAddToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mAddToolButton_clicked );
   connect( mEditPushButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mEditPushButton_clicked );
@@ -158,6 +162,7 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
 
   mMoveDownToolButton->setIconSize( QgsGuiUtils::iconSize( true ) );
   mMoveUpToolButton->setIconSize( QgsGuiUtils::iconSize( true ) );
+  mInvertNodesToolButton->setToolTip( tr( "Invert legend nodes"  ) );//wirf
   mAddGroupToolButton->setIconSize( QgsGuiUtils::iconSize( true ) );
   mAddToolButton->setIconSize( QgsGuiUtils::iconSize( true ) );
   mRemoveToolButton->setIconSize( QgsGuiUtils::iconSize( true ) );
@@ -780,6 +785,56 @@ void QgsLayoutLegendWidget::mMoveUpToolButton_clicked()
   mLegend->endCommand();
 }
 
+// wirf_16_2_21
+void QgsLayoutLegendWidget::mInvertNodesToolButton_clicked()
+{
+  if ( !mLegend )
+  {
+    return;
+  }
+  const QModelIndex index = mItemTreeView->selectionModel()->currentIndex();
+  const QModelIndex sourceIndex = mItemTreeView->proxyModel()->mapToSource( index );
+  if ( !sourceIndex.isValid() )
+    return;
+
+  QgsLayerTreeNode *currentNode = mItemTreeView->currentNode();
+  QgsLayerTreeLayer *currentLayerNode = QgsLayerTree::toLayer( currentNode );
+  if ( !currentNode && !currentLayerNode )
+  {
+    return;
+  }
+  if ( QgsMapLayerLegendUtils::hasLegendNodeOrder( currentLayerNode ) )
+  {
+    //layer order has previously been set
+    QList<int> order = QgsMapLayerLegendUtils::legendNodeOrder( currentLayerNode );
+    QList<int> reversedOrder;
+    QString order_str;//debugging
+    for ( int i = order.size()-1; i>=0; i-- )
+    {
+      reversedOrder.append( order[i] );
+      order_str += QString::number(i);//debugging
+    }
+    QgsMessageLog::logMessage( tr("Has node order and Reversed order is: %1").arg( order_str ) );
+    QgsMapLayerLegendUtils::setLegendNodeOrder( currentLayerNode, reversedOrder );
+  }
+  else
+  {
+    int nodeCount = mItemTreeView->layerTreeModel()->rowCount( sourceIndex );
+    QList<int> reversedOrder;
+    QString order_str;//debugging
+    for ( int i = nodeCount-1; i>=0; i-- )
+    {
+      reversedOrder.append( i );
+      order_str += QString::number(i);//debugging
+    }
+    QgsMessageLog::logMessage( tr("NO node order and Reversed order is: %1").arg( order_str ) );
+    QgsMapLayerLegendUtils::setLegendNodeOrder( currentLayerNode, reversedOrder );
+  }
+  mItemTreeView->layerTreeModel()->refreshLayerLegend( currentLayerNode );
+  mLegend->update();
+}
+// wirf_16_2_21
+
 void QgsLayoutLegendWidget::mCheckBoxAutoUpdate_stateChanged( int state, bool userTriggered )
 {
   if ( userTriggered )
@@ -796,7 +851,7 @@ void QgsLayoutLegendWidget::mCheckBoxAutoUpdate_stateChanged( int state, bool us
   QList<QWidget *> widgets;
   widgets << mMoveDownToolButton << mMoveUpToolButton << mRemoveToolButton << mAddToolButton
           << mEditPushButton << mCountToolButton << mUpdateAllPushButton << mAddGroupToolButton
-          << mExpressionFilterButton;
+          << mExpressionFilterButton << mInvertNodesToolButton;//wirf
   for ( QWidget *w : qgis::as_const( widgets ) )
     w->setEnabled( state != Qt::Checked );
 
@@ -1310,6 +1365,18 @@ void QgsLayoutLegendWidget::selectedChanged( const QModelIndex &current, const Q
   mCountToolButton->setChecked( false );
   mCountToolButton->setEnabled( false );
 
+  // wirf 15_2_21
+  mInvertNodesToolButton->setEnabled( false );
+
+  const QModelIndex index = mItemTreeView->selectionModel()->currentIndex();
+  const QModelIndex sourceIndex = mItemTreeView->proxyModel()->mapToSource( index );
+  int childNodeCount = mItemTreeView->layerTreeModel()->rowCount( sourceIndex );
+
+  if ( childNodeCount > 0 )
+  {
+      mInvertNodesToolButton->setEnabled( true );
+  }
+  //wirf 15_2_21
 
   mExpressionFilterButton->blockSignals( true );
   mExpressionFilterButton->setChecked( false );

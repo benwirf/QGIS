@@ -100,6 +100,9 @@ class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, private 
     //item manipulation
     void mMoveDownToolButton_clicked();
     void mMoveUpToolButton_clicked();
+    // wirf 15_2_21
+    void mInvertNodesToolButton_clicked();
+    // wirf 15_2_21
     void mRemoveToolButton_clicked();
     void mAddToolButton_clicked();
     void mEditPushButton_clicked();
