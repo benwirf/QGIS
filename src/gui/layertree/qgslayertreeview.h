@@ -31,6 +31,7 @@ class QgsLayerTreeViewMenuProvider;
 class QgsMapLayer;
 class QgsMessageBar;
 class QgsLayerTreeFilterProxyModel;
+class QModelIndex;
 
 
 #include <QSortFilterProxyModel>
@@ -216,6 +217,10 @@ class GUI_EXPORT QgsLayerTreeView : public QTreeView
      * \since QGIS 3.10
      */
     void setLayerVisible( QgsMapLayer *layer, bool visible );
+
+    // wirf 24_2_21
+    void invertLayerNodes( const QModelIndex &index );
+    // wirf 24_2_21
 
     /**
      * Sets the currently selected \a layer.

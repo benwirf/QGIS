@@ -23,6 +23,10 @@
 #include "qgslayertreeviewdefaultactions.h"
 #include "qgsmaplayer.h"
 #include "qgsmessagebar.h"
+//wirf 24_2_21
+#include "qgsmessagelog.h"
+#include "qgsmaplayerlegend.h"
+//wirf 24_2_21
 #include "qgslayertreefilterproxymodel.h"
 
 #include "qgsgui.h"
@@ -548,6 +552,48 @@ void QgsLayerTreeView::collapseAllNodes()
   _expandAllNodes( layerTreeModel()->rootGroup(), false, layerTreeModel() );
   collapseAll();
 }
+
+// wirf 24_2_21
+void QgsLayerTreeView::invertLayerNodes( const QModelIndex &index )
+{
+  const QModelIndex sourceIndex = mProxyModel->mapToSource( index );
+  if ( !sourceIndex.isValid() )
+      return;
+  QgsLayerTreeLayer *currentLayerNode = QgsLayerTree::toLayer( currentNode() );
+  if ( ! currentLayerNode )
+  {
+    return;
+  }
+  if ( QgsMapLayerLegendUtils::hasLegendNodeOrder( currentLayerNode ) )
+  {
+    //layer order has previously been set
+    QList<int> order = QgsMapLayerLegendUtils::legendNodeOrder( currentLayerNode );
+    QList<int> reversedOrder;
+    QString order_str;//debugging
+    for ( int i = order.size()-1; i>=0; i-- )
+    {
+      reversedOrder.append( order[i] );
+      order_str += QString::number(i);//debugging
+    }
+    QgsMessageLog::logMessage( tr("Has node order and Reversed order is: %1").arg( order_str ) );
+    QgsMapLayerLegendUtils::setLegendNodeOrder( currentLayerNode, reversedOrder );
+  }
+  else
+  {
+    int nodeCount = layerTreeModel()->rowCount( sourceIndex );
+    QList<int> reversedOrder;
+    QString order_str;//debugging
+    for ( int i = nodeCount-1; i>=0; i-- )
+    {
+      reversedOrder.append( i );
+      order_str += QString::number(i);//debugging
+    }
+    QgsMessageLog::logMessage( tr("NO node order and Reversed order is: %1").arg( order_str ) );
+    QgsMapLayerLegendUtils::setLegendNodeOrder( currentLayerNode, reversedOrder );
+    }
+  layerTreeModel()->refreshLayerLegend( currentLayerNode );
+}
+// wirf 24_2_21
 
 void QgsLayerTreeView::setMessageBar( QgsMessageBar *messageBar )
 {

@@ -4849,6 +4849,13 @@ void QgisApp::initLayerTreeView()
   actionCollapseAll->setToolTip( tr( "Collapse All" ) );
   connect( actionCollapseAll, &QAction::triggered, mLayerTreeView, &QgsLayerTreeView::collapseAllNodes );
 
+  //wirf 20_2_21
+  mActionInvertNodes = new QAction( tr( "Invert Legend Nodes" ), this );
+  mActionInvertNodes->setIcon( QgsApplication::getThemeIcon( QStringLiteral( "/mActionInvertNodes.svg" ) ) );
+  mActionInvertNodes->setToolTip( tr( "Invert Legend Nodes" ) );
+  connect( mActionInvertNodes, &QAction::triggered, this, &QgisApp::invertLayerLegendNodes );
+  //wirf 24_2_21
+
   QToolBar *toolbar = new QToolBar();
   toolbar->setIconSize( iconSize( true ) );
   toolbar->addAction( mActionStyleDock );
@@ -4858,6 +4865,9 @@ void QgisApp::initLayerTreeView()
   toolbar->addWidget( mLegendExpressionFilterButton );
   toolbar->addAction( actionExpandAll );
   toolbar->addAction( actionCollapseAll );
+  //wirf 20_2_21
+  toolbar->addAction( mActionInvertNodes );
+  //wirf 20_2_21
   toolbar->addAction( mActionRemoveLayer );
 
   QVBoxLayout *vboxLayout = new QVBoxLayout;
@@ -7843,6 +7853,14 @@ void QgisApp::updateFilterLegend()
     layerTreeView()->layerTreeModel()->setLegendFilterByMap( nullptr );
   }
 }
+
+// wirf 24_2_21
+void QgisApp::invertLayerLegendNodes()
+{
+  const QModelIndex index = mLayerTreeView->selectionModel()->currentIndex();
+  mLayerTreeView->invertLayerNodes( index );
+}
+// wirf 24_2_21
 
 QList< QgsMapDecoration * > QgisApp::activeDecorations()
 {
@@ -14554,11 +14572,23 @@ void QgisApp::legendLayerSelectionChanged()
   mActionSaveEdits->setEnabled( QgsLayerTreeUtils::layersModified( selectedLayers ) );
   mActionRollbackEdits->setEnabled( QgsLayerTreeUtils::layersModified( selectedLayers ) );
   mActionCancelEdits->setEnabled( QgsLayerTreeUtils::layersEditable( selectedLayers ) );
+  //wirf 22_2_21
+  mActionInvertNodes->setEnabled( false );
+  //wirf 22_2_21
 
   mLegendExpressionFilterButton->setEnabled( false );
   mLegendExpressionFilterButton->setVectorLayer( nullptr );
   if ( selectedLayers.size() == 1 )
   {
+    //wirf 22_2_21
+    const QModelIndex index = mLayerTreeView->selectionModel()->currentIndex();
+    const QModelIndex sourceIndex = mLayerTreeView->proxyModel()->mapToSource( index );
+    int childNodeCount = mLayerTreeView->layerTreeModel()->rowCount( sourceIndex );
+    if ( childNodeCount > 1 )
+    {
+        mActionInvertNodes->setEnabled( true );
+    }
+    //wirf 22_2_21
     QgsLayerTreeLayer *l = selectedLayers.front();
     if ( l->layer() && l->layer()->type() == QgsMapLayerType::VectorLayer )
     {

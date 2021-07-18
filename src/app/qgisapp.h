@@ -1263,6 +1263,10 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! Create a new spatial bookmark
     void newBookmark( bool inProject = false );
 
+    // wirf 24_2_21
+    void invertLayerLegendNodes();
+    // wirf 24_2_21
+
     /**
      * Creates a default attribute editor context using the main map canvas and the main edit tools and message bar
      * \since QGIS 3.12
@@ -2635,6 +2639,9 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QAction *mFilterLegendByMapContentAction = nullptr;
     QAction *mFilterLegendToggleShowPrivateLayersAction = nullptr;
     QAction *mActionStyleDock = nullptr;
+    //wirf
+    QAction *mActionInvertNodes = nullptr;
+    //wirf
 
     QgsLegendFilterButton *mLegendExpressionFilterButton = nullptr;
 
