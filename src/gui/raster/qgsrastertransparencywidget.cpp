@@ -14,6 +14,7 @@
  ***************************************************************************/
 #include <QWidget>
 #include <QIntValidator>
+#include <QRegularExpressionValidator>//WIRF
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
@@ -434,6 +435,21 @@ void QgsRasterTransparencyWidget::pbnImportTransparentPixelValues_clicked()
                 {
                   myTokens.insert( 1, myTokens[0] ); // add 'to' value, QGIS < 1.9 compatibility
                 }
+                //WIRF
+                if ( myTokens[2].toDouble() < 0.0)
+                {
+                  myTokens[2] = QStringLiteral( "0" );
+                  //TODO: Maybe store out of range lines/values and add to message...
+                  //E.g. OutOfRangeLines...and move message box outside loop. Will need to combine in case above AND below range
+                  QMessageBox::information( this, tr( "Load Pixel Values from File"), tr( "Out of range transparency values set to 0%" ) );
+                }
+                if (myTokens[2].toDouble() > 100.0 )
+                {
+                  myTokens[2] = QStringLiteral( "100" );
+                  //TODO: Maybe store out of range lines/values and add to message...
+                  QMessageBox::information( this, tr( "Load Pixel Values from File"), tr( "Out of range transparency values set to 100%" ) );
+                }
+                //WIRF
                 tableTransparency->insertRow( tableTransparency->rowCount() );
 
                 setTransparencyCell( tableTransparency->rowCount() - 1, static_cast< int >( SingleBandTableColumns::From ), myTokens[0].toDouble() );
@@ -767,7 +783,9 @@ void QgsRasterTransparencyWidget::setTransparencyCell( int row, int column, doub
   {
     // transparency
     // Who needs transparency as floating point?
-    lineEdit->setValidator( new QIntValidator( nullptr ) );
+    //lineEdit->setValidator( new QIntValidator( nullptr ) );
+    //WIRF
+    lineEdit->setValidator( new QRegularExpressionValidator( QRegularExpression( "^([1-9][0-9]?|100)$" ) ) );
     lineEdit->setText( QString::number( static_cast<int>( value ) ) );
     connect( lineEdit, &QLineEdit::textEdited, this, &QgsPanelWidget::widgetChanged );
   }
