@@ -359,7 +359,10 @@ void QgsRasterTransparencyWidget::pbnImportTransparentPixelValues_clicked()
 {
   int myLineCounter = 0;
   bool myImportError = false;
+  bool myOutOfRangeError = false;//WIRF
   QString myBadLines;
+  QString myLowLines;//WIRF
+  QString myHighLines;//WIRF
   const QgsSettings myQSettings;
   const QString myLastDir = myQSettings.value( QStringLiteral( "lastRasterFileFilterDir" ), QDir::homePath() ).toString();
   const QString myFileName = QFileDialog::getOpenFileName( this, tr( "Load Pixel Values from File" ), myLastDir, tr( "Textfile" ) + " (*.txt)" );
@@ -438,16 +441,15 @@ void QgsRasterTransparencyWidget::pbnImportTransparentPixelValues_clicked()
                 //WIRF
                 if ( myTokens[2].toDouble() < 0.0)
                 {
+                  myOutOfRangeError = true;
                   myTokens[2] = QStringLiteral( "0" );
-                  //TODO: Maybe store out of range lines/values and add to message...
-                  //E.g. OutOfRangeLines...and move message box outside loop. Will need to combine in case above AND below range
-                  QMessageBox::information( this, tr( "Load Pixel Values from File"), tr( "Out of range transparency values set to 0%" ) );
+                  myLowLines = myLowLines + QString::number( myLineCounter ) + ":\t[" + myInputLine + "]\n";
                 }
                 if (myTokens[2].toDouble() > 100.0 )
                 {
+                  myOutOfRangeError = true;
                   myTokens[2] = QStringLiteral( "100" );
-                  //TODO: Maybe store out of range lines/values and add to message...
-                  QMessageBox::information( this, tr( "Load Pixel Values from File"), tr( "Out of range transparency values set to 100%" ) );
+                  myHighLines = myHighLines + QString::number( myLineCounter ) + ":\t[" + myInputLine + "]\n";
                 }
                 //WIRF
                 tableTransparency->insertRow( tableTransparency->rowCount() );
@@ -466,6 +468,21 @@ void QgsRasterTransparencyWidget::pbnImportTransparentPixelValues_clicked()
     if ( myImportError )
     {
       QMessageBox::warning( this, tr( "Load Pixel Values from File" ), tr( "The following lines contained errors\n\n%1" ).arg( myBadLines ) );
+    }
+    //WIRF
+    if ( myOutOfRangeError )
+    {
+    //Construct info message and show message box
+      QString outOfRangeMessage;
+      if ( !myLowLines.isEmpty() )
+      {
+        outOfRangeMessage = outOfRangeMessage + tr( "Out of range transparency values in the following lines were set to 0\n\n%1" ).arg( myLowLines );
+      }
+      if ( !myHighLines.isEmpty() )
+      {
+        outOfRangeMessage = outOfRangeMessage + tr( "Out of range transparency values in the following lines were set to 100\n\n%1" ).arg( myHighLines );
+      }
+    QMessageBox::information( this, tr( "Load Pixel Values from File"), outOfRangeMessage );
     }
   }
   else if ( !myFileName.isEmpty() )
