@@ -25,6 +25,9 @@
 #include "qgsproject.h"
 #include "qgssnapindicator.h"
 #include "qgsmapmouseevent.h"
+#include "qgscircle.h"
+#include "qgssettingsregistrycore.h"
+#include "qgssettingsentryimpl.h"
 
 #include <QMessageBox>
 
@@ -34,6 +37,7 @@ QgsMeasureTool::QgsMeasureTool( QgsMapCanvas *canvas, bool measureArea )
   , mMeasureArea( measureArea )
   , mSnapIndicator( new QgsSnapIndicator( canvas ) )
 {
+  mRubberBandBuffer = new QgsRubberBand( canvas, Qgis::GeometryType::Polygon );
   mRubberBand = new QgsRubberBand( canvas, mMeasureArea ? Qgis::GeometryType::Polygon : Qgis::GeometryType::Line );
   mRubberBandPoints = new QgsRubberBand( canvas, Qgis::GeometryType::Point );
 
@@ -62,6 +66,10 @@ QVector<QgsPointXY> QgsMeasureTool::points() const
 void QgsMeasureTool::activate()
 {
   mDialog->show();
+  if ( !mMeasureArea )
+  {
+    mRubberBandBuffer->show();
+  }
   mRubberBand->show();
   mRubberBandPoints->show();
   QgsMapTool::activate();
@@ -90,6 +98,10 @@ void QgsMeasureTool::deactivate()
   mSnapIndicator->setMatch( QgsPointLocator::Match() );
 
   mDialog->hide();
+  if ( !mMeasureArea )
+  {
+    mRubberBandBuffer->hide();
+  }
   mRubberBand->hide();
   mRubberBandPoints->hide();
   QgsMapTool::deactivate();
@@ -109,6 +121,7 @@ void QgsMeasureTool::restart()
 
   mRubberBand->reset( mMeasureArea ? Qgis::GeometryType::Polygon : Qgis::GeometryType::Line );
   mRubberBandPoints->reset( Qgis::GeometryType::Point );
+  mRubberBandBuffer->reset( Qgis::GeometryType::Polygon );
 
   mDone = true;
   mWrongProjectProjection = false;
@@ -126,6 +139,10 @@ void QgsMeasureTool::updateSettings()
   mRubberBandPoints->setIcon( QgsRubberBand::ICON_CIRCLE );
   mRubberBandPoints->setIconSize( 10 );
   mRubberBandPoints->setColor( QColor( myRed, myGreen, myBlue, 150 ) );
+  mRubberBandBuffer->setColor( QColor( myRed, myGreen, myBlue, 100 ) );
+  mRubberBandBuffer->setWidth( 3 );
+  // Retrieve setting indicating whether to show distance buffer rubberband
+  mShowBufferArea = QgsSettingsRegistryCore::settingsShowMeasureDistanceBufferArea->value();
 
   // Reproject the points to the new destination CoordinateReferenceSystem
   if ( mRubberBand->size() > 0 && mDestinationCrs != mCanvas->mapSettings().destinationCrs() && mCanvas->mapSettings().destinationCrs().isValid() )
@@ -154,8 +171,11 @@ void QgsMeasureTool::updateSettings()
       }
     }
 
+    QgsPointXY last_mouse_point = ct.transform( mLastMousePoint );
+    mLastMousePoint = last_mouse_point;
     mRubberBand->updatePosition();
     mRubberBandPoints->updatePosition();
+    manageBufferRubberBand();
   }
   mDestinationCrs = mCanvas->mapSettings().destinationCrs();
 
@@ -189,10 +209,13 @@ void QgsMeasureTool::canvasMoveEvent( QgsMapMouseEvent *e )
   const QgsPointXY point = e->snapPoint();
   mSnapIndicator->setMatch( e->mapPointMatch() );
 
+  mLastMousePoint = point;
+
   if ( !mDone )
   {
     mRubberBand->movePoint( point );
     mDialog->mouseMove( point );
+    manageBufferRubberBand();
   }
 }
 
@@ -209,16 +232,109 @@ void QgsMeasureTool::canvasReleaseEvent( QgsMapMouseEvent *e )
   if ( e->button() == Qt::RightButton ) // if we clicked the right button we stop measuring
   {
     mDone = true;
-    mRubberBand->removeLastPoint();
-    mDialog->removeLastPoint();
+    if ( !mShowBufferArea )
+    {
+      mRubberBand->removeLastPoint();
+      mDialog->removeLastPoint();
+    }
+    else
+    {
+      addPoint( point );
+    }
   }
   else if ( e->button() == Qt::LeftButton )
   {
     mDone = false;
     addPoint( point );
+    // Reset the buffer area rubberband on left-click (so only show for last line segment)
+    if ( !mMeasureArea )
+    {
+      mRubberBandBuffer->reset();
+    }
   }
 
   mDialog->show();
+}
+
+void QgsMeasureTool::manageBufferRubberBand()
+{
+  if ( mMeasureArea or !mShowBufferArea)
+  {
+    mRubberBandBuffer->reset();
+    return;
+  }
+  // Retrieve current center & exterior points
+  int pntCount = mPoints.length();
+  QgsPoint tmpCntrPt;
+  QgsPoint tmpOutrPt;
+  if ( mDone && pntCount > 1 )
+  {
+    tmpCntrPt = QgsPoint( mPoints.at( pntCount-2 ) );
+    tmpOutrPt = QgsPoint( mPoints.at( pntCount-1 ) );
+  }
+  else
+  {
+    tmpCntrPt = QgsPoint( mPoints.at( pntCount-1 ) );
+    tmpOutrPt = QgsPoint( mLastMousePoint );
+  }
+  QgsGeometry bufferRbGeom;
+  if ( mDialog->cartesian() )
+  {
+    bufferRbGeom = cartesianBufferGeom( tmpCntrPt, tmpOutrPt, 360 );
+  }
+  else
+  {
+    bufferRbGeom = ellipsoidalBufferGeom( tmpCntrPt, tmpOutrPt, 90 );
+  }
+  mRubberBandBuffer->setToGeometry( bufferRbGeom );
+}
+
+QgsGeometry QgsMeasureTool::cartesianBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices )
+{
+  double dist = centerPoint.distance( exteriorPoint );
+  double az = centerPoint.azimuth( exteriorPoint );
+  QgsCircle circ = QgsCircle( centerPoint, dist, az );
+  QgsPolygon *poly = circ.toPolygon( numVertices );
+  QgsGeometry circleGeom = QgsGeometry( poly );
+
+  return circleGeom;
+}
+
+QgsGeometry QgsMeasureTool::ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices )
+{  
+  double x = centerPoint.x();
+  double y = centerPoint.y();
+  QString projString = QString( "+proj=aeqd +lat_0=%1 +lon_0=%2 +x_0=0 +y_0=0" ).arg( QLocale().toString( y ), QLocale().toString( x ) );
+  QgsCoordinateReferenceSystem destCrs;
+  bool createCrsSuccess = destCrs.createFromProj( projString );
+  if ( !createCrsSuccess )
+  {
+    return QgsGeometry();
+  }
+  // Transform center & exterior points from canvas to to custom Azimuthal Equidistant crs
+  const QgsCoordinateTransform ct( mCanvas->mapSettings().destinationCrs(), destCrs, QgsProject::instance() );
+  QgsGeometry centerPtGeom = QgsGeometry::fromPoint( centerPoint );
+  QgsGeometry exteriorPtGeom = QgsGeometry::fromPoint( exteriorPoint );
+  try
+  {
+    centerPtGeom.transform( ct );
+    exteriorPtGeom.transform( ct );
+  }
+  catch ( QgsCsException &cse )
+  {
+    //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+    return QgsGeometry();
+  }
+  double bufferDist = centerPtGeom.distance( exteriorPtGeom );
+  QgsGeometry bufferGeom = centerPtGeom.buffer( bufferDist, numVertices );
+  bufferGeom.transform( ct, Qgis::TransformDirection::Reverse );
+  centerPtGeom.transform( ct, Qgis::TransformDirection::Reverse );
+  if ( !bufferGeom.contains( centerPtGeom ) || !bufferGeom.isGeosValid() )
+  {
+    return QgsGeometry();
+  }
+
+  return bufferGeom;
 }
 
 void QgsMeasureTool::undo()
@@ -259,6 +375,8 @@ void QgsMeasureTool::keyPressEvent( QKeyEvent *e )
     if ( !mDone )
     {
       undo();
+      manageBufferRubberBand();
+
     }
 
     // Override default shortcut management in MapCanvas

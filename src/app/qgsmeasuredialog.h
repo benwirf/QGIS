@@ -57,6 +57,9 @@ class APP_EXPORT QgsMeasureDialog : public QDialog, private Ui::QgsMeasureBase
     //! Removes the last point
     void removeLastPoint();
 
+    //! Returns whether cartesian checkbox is checked
+    bool cartesian();
+
   public slots:
     void reject() override;
 

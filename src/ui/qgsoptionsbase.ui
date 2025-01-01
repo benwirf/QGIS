@@ -122,7 +122,7 @@
        <item>
         <widget class="QStackedWidget" name="mOptionsStackedWidget">
          <property name="currentIndex">
-          <number>4</number>
+          <number>7</number>
          </property>
          <widget class="QWidget" name="mOptionsPageGeneral">
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -151,7 +151,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>843</width>
+                <width>588</width>
                 <height>1009</height>
                </rect>
               </property>
@@ -971,7 +971,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>843</width>
+                <width>578</width>
                 <height>1068</height>
                </rect>
               </property>
@@ -1510,8 +1510,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>857</width>
-                <height>685</height>
+                <width>563</width>
+                <height>475</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_15">
@@ -1754,8 +1754,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>857</width>
-                <height>685</height>
+                <width>596</width>
+                <height>105</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_47">
@@ -1837,7 +1837,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>843</width>
+                <width>627</width>
                 <height>772</height>
                </rect>
               </property>
@@ -2830,8 +2830,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>622</width>
-                <height>925</height>
+                <width>843</width>
+                <height>948</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_30">
@@ -2995,21 +2995,27 @@
                  </property>
                  <layout class="QGridLayout" name="gridLayout_21">
                   <item row="5" column="0">
-                   <widget class="QLabel" name="mAngleUnitsLabel">
-                    <property name="text">
-                     <string>Preferred angle units</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="4" column="0">
                    <widget class="QLabel" name="textLabel1_14">
                     <property name="text">
                      <string>Preferred area units</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="5" column="1" colspan="3">
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_13">
+                    <property name="toolTip">
+                     <string>If unchecked large numbers will be converted from m. to km. and from ft. to miles</string>
+                    </property>
+                    <property name="text">
+                     <string>Keep base unit</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1" colspan="3">
                    <widget class="QComboBox" name="mAngleUnitsComboBox"/>
+                  </item>
+                  <item row="4" column="1" colspan="3">
+                   <widget class="QComboBox" name="mDistanceUnitsComboBox"/>
                   </item>
                   <item row="0" column="2" colspan="2">
                    <spacer>
@@ -3024,13 +3030,44 @@
                     </property>
                    </spacer>
                   </item>
-                  <item row="3" column="1" colspan="3">
-                   <widget class="QComboBox" name="mDistanceUnitsComboBox"/>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="textLabel1_11">
+                    <property name="text">
+                     <string>Preferred distance units</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_12">
+                    <property name="text">
+                     <string>Decimal places</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1" colspan="3">
+                   <widget class="QComboBox" name="mAreaUnitsComboBox"/>
                   </item>
                   <item row="0" column="0">
                    <widget class="QLabel" name="textLabel1_10">
                     <property name="text">
                      <string>Rubberband color</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QgsSpinBox" name="mDecimalPlacesSpinBox"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="mAngleUnitsLabel">
+                    <property name="text">
+                     <string>Preferred angle units</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QCheckBox" name="mKeepBaseUnitCheckBox">
+                    <property name="text">
+                     <string/>
                     </property>
                    </widget>
                   </item>
@@ -3059,42 +3096,19 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="0">
-                   <widget class="QLabel" name="textLabel1_11">
-                    <property name="text">
-                     <string>Preferred distance units</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QCheckBox" name="mKeepBaseUnitCheckBox">
+                  <item row="1" column="1">
+                   <widget class="QCheckBox" name="mShowBufferAreaCheckBox">
                     <property name="text">
                      <string/>
                     </property>
                    </widget>
                   </item>
                   <item row="1" column="0">
-                   <widget class="QLabel" name="label_12">
+                   <widget class="QLabel" name="label_34">
                     <property name="text">
-                     <string>Decimal places</string>
+                     <string>Show distance buffer area</string>
                     </property>
                    </widget>
-                  </item>
-                  <item row="2" column="0">
-                   <widget class="QLabel" name="label_13">
-                    <property name="toolTip">
-                     <string>If unchecked large numbers will be converted from m. to km. and from ft. to miles</string>
-                    </property>
-                    <property name="text">
-                     <string>Keep base unit</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QgsSpinBox" name="mDecimalPlacesSpinBox"/>
-                  </item>
-                  <item row="4" column="1" colspan="3">
-                   <widget class="QComboBox" name="mAreaUnitsComboBox"/>
                   </item>
                  </layout>
                 </widget>

@@ -175,6 +175,9 @@ class CORE_EXPORT QgsSettingsRegistryCore : public QgsSettingsRegistry
     //! Settings entry autosize columns by default when opening attribute table
     static const QgsSettingsEntryBool *settingsAutosizeAttributeTable;
 
+    //! Settings entry whether to show distance buffer area rubberband for last segment when measuring line
+    static const QgsSettingsEntryBool *settingsShowMeasureDistanceBufferArea;
+
   private:
     friend class QgsApplication;
 

@@ -26,6 +26,7 @@ class QgsMapCanvas;
 class QgsMeasureDialog;
 class QgsRubberBand;
 class QgsSnapIndicator;
+class QgsGeometry;//WIRF
 
 
 class APP_EXPORT QgsMeasureTool : public QgsMapTool
@@ -54,6 +55,14 @@ class APP_EXPORT QgsMeasureTool : public QgsMapTool
     //! Returns reference to array of the points
     QVector<QgsPointXY> points() const;
 
+    //WIRF
+    void manageBufferRubberBand();
+
+    QgsGeometry cartesianBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices );
+
+    QgsGeometry ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices );
+    //
+
     // Inherited from QgsMapTool
 
     void canvasMoveEvent( QgsMapMouseEvent *e ) override;
@@ -79,11 +88,19 @@ class APP_EXPORT QgsMeasureTool : public QgsMapTool
     //! Rubberband widget tracking the added nodes to line
     QgsRubberBand *mRubberBandPoints = nullptr;
 
+    //! Rubberband widget showing the buffer defined by the last line segment WIRF
+    QgsRubberBand *mRubberBandBuffer = nullptr;
+
     //! Indicates whether we're measuring distances or areas
     bool mMeasureArea = false;
 
     //! Indicates whether we've just done a right mouse click
     bool mDone = true;
+
+    //! Indicates whether to draw the buffer rubberband WIRF
+    bool mShowBufferArea = false;
+
+    QgsPointXY mLastMousePoint;
 
     /**
      * Indicates whether we've recently warned the user about having the wrong

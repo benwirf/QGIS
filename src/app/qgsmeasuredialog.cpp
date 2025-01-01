@@ -125,6 +125,8 @@ void QgsMeasureDialog::projChanged()
 
   // Update the table and information displayed to the user
   updateUi();
+  // Redraw the measure tool's buffer rubberband (if shown)
+  mTool->manageBufferRubberBand();
 }
 
 void QgsMeasureDialog::openConfigTab()
@@ -868,4 +870,9 @@ void QgsMeasureDialog::reject()
 void QgsMeasureDialog::showHelp()
 {
   QgsHelp::openHelp( QStringLiteral( "map_views/map_view.html#sec-measure" ) );
+}
+
+bool QgsMeasureDialog::cartesian()
+{
+  return mCartesian->isChecked();
 }

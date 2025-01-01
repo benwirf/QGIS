@@ -121,6 +121,8 @@ const QgsSettingsEntryInteger64 *QgsSettingsRegistryCore::settingsNetworkCacheSi
 
 const QgsSettingsEntryBool *QgsSettingsRegistryCore::settingsAutosizeAttributeTable = new QgsSettingsEntryBool( QStringLiteral( "autosize-attribute-table" ), QgsSettingsTree::sTreeAttributeTable, false );
 
+const QgsSettingsEntryBool *QgsSettingsRegistryCore::settingsShowMeasureDistanceBufferArea = new QgsSettingsEntryBool( QStringLiteral( "show-measure-distance-buffer-area" ), QgsSettingsTree::sTreeMeasure, false );
+
 QgsSettingsRegistryCore::QgsSettingsRegistryCore()
   : QgsSettingsRegistry()
 {

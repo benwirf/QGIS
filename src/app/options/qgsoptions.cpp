@@ -661,6 +661,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   mDecimalPlacesSpinBox->setRange( 0, 12 );
   mDecimalPlacesSpinBox->setValue( decimalPlaces );
 
+  // set whether distance buffer rubberband should be shown for last segment when measuring line
+  bool showBufferArea = QgsSettingsRegistryCore::settingsShowMeasureDistanceBufferArea->value();
+  mShowBufferAreaCheckBox->setChecked( showBufferArea );
+
   // set if base unit of measure tool should be changed
   bool baseUnit = mSettings->value( QStringLiteral( "qgis/measure/keepbaseunit" ), true ).toBool();
   mKeepBaseUnitCheckBox->setChecked( baseUnit );
@@ -1698,6 +1702,9 @@ void QgsOptions::saveOptions()
 
   bool baseUnit = mKeepBaseUnitCheckBox->isChecked();
   mSettings->setValue( QStringLiteral( "/qgis/measure/keepbaseunit" ), baseUnit );
+
+  bool showBufferArea = mShowBufferAreaCheckBox->isChecked();
+  QgsSettingsRegistryCore::settingsShowMeasureDistanceBufferArea->setValue( showBufferArea );
 
   QgsMeasureDialog::settingClipboardHeader->setValue( mIncludeHeader->isChecked() );
   QgsMeasureDialog::settingClipboardAlwaysUseDecimalPoint->setValue( mAlwaysUseDecimalPoint->isChecked() );
