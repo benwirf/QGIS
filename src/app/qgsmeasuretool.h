@@ -60,7 +60,7 @@ class APP_EXPORT QgsMeasureTool : public QgsMapTool
 
     QgsGeometry cartesianBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices );
 
-    QgsGeometry ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices );
+    QgsGeometry ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numSegments );
     //
 
     // Inherited from QgsMapTool

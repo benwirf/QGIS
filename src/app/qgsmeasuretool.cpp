@@ -300,6 +300,7 @@ QgsGeometry QgsMeasureTool::cartesianBufferGeom( QgsPoint centerPoint, QgsPoint 
   return circleGeom;
 }
 
+/*
 QgsGeometry QgsMeasureTool::ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numVertices )
 {  
   double x = centerPoint.x();
@@ -329,6 +330,7 @@ QgsGeometry QgsMeasureTool::ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoin
   QgsGeometry bufferGeom = centerPtGeom.buffer( bufferDist, numVertices );
   bufferGeom.transform( ct, Qgis::TransformDirection::Reverse );
   centerPtGeom.transform( ct, Qgis::TransformDirection::Reverse );
+
   if ( !bufferGeom.contains( centerPtGeom ) || !bufferGeom.isGeosValid() )
   {
     return QgsGeometry();
@@ -336,6 +338,148 @@ QgsGeometry QgsMeasureTool::ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoin
 
   return bufferGeom;
 }
+*/
+
+QgsGeometry QgsMeasureTool::ellipsoidalBufferGeom( QgsPoint centerPoint, QgsPoint exteriorPoint, int numSegments )
+{
+  if ( !mCanvas->mapSettings().destinationCrs().isGeographic() )
+  {
+    //Transform center & exterior points to epsg:4326
+    QgsCoordinateReferenceSystem geoCrs;
+    geoCrs.createFromString( QStringLiteral("EPSG:4326") );
+    const QgsCoordinateTransform xform( mCanvas->mapSettings().destinationCrs(), geoCrs, QgsProject::instance() );
+    try
+    {
+      centerPoint.transform( xform );
+      exteriorPoint.transform( xform );
+    }
+    catch ( QgsCsException &cse )
+    {
+      //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+      return QgsGeometry();
+    }
+    double x = centerPoint.x();
+    double y = centerPoint.y();
+    //QString projString = QString( "+proj=aeqd +lat_0=%1 +lon_0=%2 +x_0=0 +y_0=0" ).arg( QLocale().toString( y ), QLocale().toString( x ) );
+    QString projString = QString( "+proj=aeqd +lat_0=%1 +lon_0=%2 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs" ).arg( QLocale().toString( y ), QLocale().toString( x ) );
+    QgsCoordinateReferenceSystem destCrs;
+    bool createCrsSuccess = destCrs.createFromProj( projString );
+    if ( !createCrsSuccess )
+    {
+      return QgsGeometry();
+    }
+    // Transform center & exterior points from canvas to to custom Azimuthal Equidistant crs
+    const QgsCoordinateTransform ct( geoCrs, destCrs, QgsProject::instance() );
+    QgsGeometry centerPtGeom = QgsGeometry::fromPoint( centerPoint );
+    QgsGeometry exteriorPtGeom = QgsGeometry::fromPoint( exteriorPoint );
+    try
+    {
+      centerPtGeom.transform( ct );
+      exteriorPtGeom.transform( ct );
+    }
+    catch ( QgsCsException &cse )
+    {
+      //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+      return QgsGeometry();
+    }
+    double bufferDist = centerPtGeom.distance( exteriorPtGeom );
+    QgsGeometry bufferGeom = centerPtGeom.buffer( bufferDist, numSegments );
+    const QgsCoordinateTransform xf( destCrs, mCanvas->mapSettings().destinationCrs(), QgsProject::instance() );
+    try
+    {
+      bufferGeom.transform( xf );
+      centerPtGeom.transform( xf );
+    }
+    catch ( QgsCsException &cse )
+    {
+      //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+      return QgsGeometry();
+    }
+    //QgsRectangle crs_bounds = xform.transform(mCanvas->mapSettings().destinationCrs().bounds(), Qgis::TransformDirection::Reverse);
+    //QgsGeometry clipped_geom = bufferGeom.clipped( crs_bounds );
+    //QgsMessageLog::logMessage( clipped_geom.asWkt() );
+    //return clipped_geom;
+    //QgsMessageLog::logMessage( bufferGeom.asWkt() );
+    return bufferGeom;
+  }
+  ////End if canvas CRS is not geographic
+
+  double x = centerPoint.x();
+  double y = centerPoint.y();
+  QString projString = QString( "+proj=aeqd +lat_0=%1 +lon_0=%2 +x_0=0 +y_0=0" ).arg( QLocale().toString( y ), QLocale().toString( x ) );
+  QgsCoordinateReferenceSystem destCrs;
+  bool createCrsSuccess = destCrs.createFromProj( projString );
+  if ( !createCrsSuccess )
+  {
+    return QgsGeometry();
+  }
+  // Transform center & exterior points from canvas to to custom Azimuthal Equidistant crs
+  const QgsCoordinateTransform ct( mCanvas->mapSettings().destinationCrs(), destCrs, QgsProject::instance() );
+  QgsGeometry centerPtGeom = QgsGeometry::fromPoint( centerPoint );
+  QgsGeometry exteriorPtGeom = QgsGeometry::fromPoint( exteriorPoint );
+  try
+  {
+    centerPtGeom.transform( ct );
+    exteriorPtGeom.transform( ct );
+  }
+  catch ( QgsCsException &cse )
+  {
+    //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+    return QgsGeometry();
+  }
+  double bufferDist = centerPtGeom.distance( exteriorPtGeom );
+  QgsGeometry bufferGeom = centerPtGeom.buffer( bufferDist, numSegments );
+  QgsGeometry test_buff = QgsGeometry::fromWkt( bufferGeom.asWkt() );
+  test_buff.transform(ct, Qgis::TransformDirection::Reverse);
+  if ( !test_buff.isGeosValid() )
+  {
+      //***HERE WE TRANSFORM BUFFER TO PACIFIC CENTERED CRS & DIFFERENCE WITH BUFFERED 180 LINE
+      QgsPolyline line;
+      line.append( QgsPoint( 180.0, 90.0 ) );
+      line.append( QgsPoint( 180.0, -90.0 ) );
+      const QgsCoordinateTransform ct_geo2pac( mCanvas->mapSettings().destinationCrs(), QgsCoordinateReferenceSystem(QStringLiteral("EPSG:3832")), QgsProject::instance() );
+      QgsGeometry antimerid = QgsGeometry::fromPolyline( line );
+      QgsGeometry dense_antimerid = antimerid.densifyByCount( 100 );
+      dense_antimerid.transform(ct_geo2pac);
+      QgsGeometry anti_merid_buff = dense_antimerid.buffer( 0.1, 5 );
+      //
+      const QgsCoordinateTransform ct_aeqd2pac( destCrs, QgsCoordinateReferenceSystem(QStringLiteral("EPSG:3832")), QgsProject::instance() );
+      bufferGeom.transform(ct_aeqd2pac);
+      QgsGeometry diff = bufferGeom.difference(anti_merid_buff);
+      const QgsCoordinateTransform ct_pac2canvas( QgsCoordinateReferenceSystem(QStringLiteral("EPSG:3832")), mCanvas->mapSettings().destinationCrs(), QgsProject::instance() );
+      //***END THIS BLOCK
+      diff.transform( ct_pac2canvas );
+      QgsRectangle my_rect = QgsRectangle( QgsPointXY( -179.9, 84.9  ), QgsPointXY( 179.9, -84.9 ) );
+      //return diff.intersection( QgsGeometry::fromRect( my_rect ) );
+      return diff;
+  }
+  try
+  {
+    bufferGeom.transform( ct, Qgis::TransformDirection::Reverse );
+    centerPtGeom.transform( ct, Qgis::TransformDirection::Reverse );
+  }
+  catch ( QgsCsException &cse )
+  {
+    //QgsMessageLog::logMessage( tr( "Transform error caught at the MeasureTool: %1" ).arg( cse.what() ) );
+    //return QgsGeometry();
+    return bufferGeom;
+  }
+  /*
+  if ( !bufferGeom.contains( centerPtGeom ) || !bufferGeom.isGeosValid() )
+  {
+    return QgsGeometry();
+  }
+  */
+  //QgsMessageLog::logMessage( bufferGeom.asWkt() );
+  //Try splitting geometry at 180 line
+
+  //QgsMessageLog::logMessage( QLocale().toString( bufferGeom.isGeosValid() ) );
+  //QgsGeometry diff = bufferGeom.makeValid().difference( anti_merid );
+  //
+  //QgsMessageLog::logMessage( diff.asWkt() );
+  return bufferGeom;
+}
+//////////////////////////////////////////////////////////////////////////
 
 void QgsMeasureTool::undo()
 {
